@@ -22,3 +22,10 @@ mongoose.connect(process.env.MONGO_URI)
 
 const authRoutes = require('./routes/authRoutes');
 app.use('/api/auth', authRoutes);
+
+const pessoaRoutes = require('./routes/pessoaRoutes');
+app.use('/api/pessoas', pessoaRoutes);
+
+
+// Servir imagens estáticas
+app.use('/uploads', express.static('uploads'));
