@@ -18,3 +18,13 @@ exports.listarAbrigos = async (req, res) => {
     res.status(500).json({ error: 'Erro ao buscar abrigos' });
   }
 };
+
+exports.deletarAbrigo = async (req, res) => {
+  try {
+    await Abrigo.findByIdAndDelete(req.params.id);
+    res.status(204).end();
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao deletar abrigo' });
+  }
+};
+

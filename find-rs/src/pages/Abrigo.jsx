@@ -1,6 +1,6 @@
-import { useState } from 'react'
-import './index.css';
-
+import { useEffect, useState } from 'react'
+import axios from 'axios'
+import './index.css'
 
 export default function Abrigo() {
   const [showModal, setShowModal] = useState(false)
@@ -21,21 +21,50 @@ export default function Abrigo() {
     setForm((prev) => ({ ...prev, [name]: value }))
   }
 
-  const handleSubmit = (e) => {
-    e.preventDefault()
-    console.log('Dados enviados:', form)
-    setAbrigados((prev) => [...prev, form])
-    setForm({
-      nome: '',
-      cidade: '',
-      bairro: '',
-      rua: '',
-      numero: '',
-      email: '',
-      senha: '',
-    })
-    setShowModal(false)
+  const fetchAbrigos = async () => {
+    try {
+      const res = await axios.get('http://localhost:5000/api/abrigos')
+      setAbrigados(res.data)
+    } catch (err) {
+      console.error('Erro ao buscar abrigos:', err)
+    }
   }
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    try {
+      await axios.post('http://localhost:5000/api/abrigos', form)
+      setShowModal(false)
+      setForm({
+        nome: '',
+        cidade: '',
+        bairro: '',
+        rua: '',
+        numero: '',
+        email: '',
+        senha: '',
+      })
+      fetchAbrigos()
+    } catch (err) {
+      console.error('Erro ao criar abrigo:', err)
+    }
+  }
+
+  const handleDelete = async (id) => {
+    const confirmar = window.confirm('Tem certeza que deseja excluir este abrigo?')
+    if (!confirmar) return
+
+    try {
+      await axios.delete(`http://localhost:5000/api/abrigos/${id}`)
+      fetchAbrigos()
+    } catch (err) {
+      console.error('Erro ao excluir abrigo:', err)
+    }
+  }
+
+  useEffect(() => {
+    fetchAbrigos()
+  }, [])
 
   const fabStyle = {
     position: 'fixed',
@@ -107,36 +136,39 @@ export default function Abrigo() {
     color: '#333',
   }
 
-  const cardStyle = {
-    border: '2px solid #000',
-    borderRadius: '8px',
-    padding: '16px',
-    width: '100%',
-    maxWidth: '300px',
-    wordWrap: 'break-word',
-    boxSizing: 'border-box',
+  const deleteButtonStyle = {
+    marginTop: '12px',
+    padding: '6px 12px',
+    backgroundColor: '#dc2626',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
   }
 
   return (
     <div style={{ padding: '20px' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Área do Abrigo</h2>
 
-      {/* Lista de abrigos criados */}
       <div className="cards-container">
         {abrigos.map((abrigo, index) => (
           <div key={index} className="card-abrigo">
-            <h3 style={{ margin: '0 0 8px 0' }}>{abrigo.nome}</h3>
-            <p style={{ margin: 0 }}>
+            <h3>{abrigo.nome}</h3>
+            <p>
               {abrigo.rua}, {abrigo.numero} - {abrigo.bairro}, {abrigo.cidade}
             </p>
+            <button
+              style={deleteButtonStyle}
+              onClick={() => handleDelete(abrigo._id)}
+            >
+              Excluir
+            </button>
           </div>
         ))}
       </div>
 
-      {/* Botão flutuante */}
       <button style={fabStyle} onClick={() => setShowModal(true)}>+</button>
 
-      {/* Modal */}
       {showModal && (
         <div style={modalStyle}>
           <div style={formStyle}>
@@ -149,69 +181,13 @@ export default function Abrigo() {
             </button>
             <h3 style={{ marginBottom: '20px' }}>Criar Abrigo</h3>
             <form onSubmit={handleSubmit}>
-              <input
-                style={inputStyle}
-                type="text"
-                name="nome"
-                placeholder="Nome do abrigo"
-                value={form.nome}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                style={inputStyle}
-                type="text"
-                name="cidade"
-                placeholder="Cidade"
-                value={form.cidade}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                style={inputStyle}
-                type="text"
-                name="bairro"
-                placeholder="Bairro"
-                value={form.bairro}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                style={inputStyle}
-                type="text"
-                name="rua"
-                placeholder="Rua"
-                value={form.rua}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                style={inputStyle}
-                type="text"
-                name="numero"
-                placeholder="Número"
-                value={form.numero}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                style={inputStyle}
-                type="email"
-                name="email"
-                placeholder="E-mail do responsável"
-                value={form.email}
-                onChange={handleInputChange}
-                required
-              />
-              <input
-                style={inputStyle}
-                type="password"
-                name="senha"
-                placeholder="Senha"
-                value={form.senha}
-                onChange={handleInputChange}
-                required
-              />
+              <input style={inputStyle} type="text" name="nome" placeholder="Nome do abrigo" value={form.nome} onChange={handleInputChange} required />
+              <input style={inputStyle} type="text" name="cidade" placeholder="Cidade" value={form.cidade} onChange={handleInputChange} required />
+              <input style={inputStyle} type="text" name="bairro" placeholder="Bairro" value={form.bairro} onChange={handleInputChange} required />
+              <input style={inputStyle} type="text" name="rua" placeholder="Rua" value={form.rua} onChange={handleInputChange} required />
+              <input style={inputStyle} type="text" name="numero" placeholder="Número" value={form.numero} onChange={handleInputChange} required />
+              <input style={inputStyle} type="email" name="email" placeholder="E-mail do responsável" value={form.email} onChange={handleInputChange} required />
+              <input style={inputStyle} type="password" name="senha" placeholder="Senha" value={form.senha} onChange={handleInputChange} required />
               <button type="submit" style={submitStyle}>Criar</button>
             </form>
           </div>
