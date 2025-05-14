@@ -1,17 +1,22 @@
+const bcrypt = require('bcryptjs');
 const Abrigo = require('../models/Abrigo');
 
 exports.criarAbrigo = async (req, res) => {
   try {
-    console.log('Recebido do frontend:', req.body); // ← VERIFICAÇÃO AQUI
-    const novoAbrigo = new Abrigo(req.body);
+    const { senha, ...resto } = req.body;
+
+    const hash = await bcrypt.hash(senha, 10); // ← criptografa a senha
+    const novoAbrigo = new Abrigo({ ...resto, senha: hash });
+
     const salvo = await novoAbrigo.save();
-    console.log('Abrigo salvo:', salvo); // ← VERIFICAÇÃO AQUI
+    console.log('Abrigo salvo:', salvo);
     res.status(201).json(salvo);
   } catch (err) {
     console.error('Erro ao salvar abrigo:', err);
     res.status(500).json({ error: 'Erro ao salvar abrigo' });
   }
 };
+
 
 
 exports.listarAbrigos = async (req, res) => {

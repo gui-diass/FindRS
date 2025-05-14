@@ -14,8 +14,11 @@ app.use('/api/abrigos', abrigoRoutes);
 
 // Conectar ao MongoDB e iniciar o servidor
 mongoose.connect(process.env.MONGO_URI)
-  .then(() => {
-    console.log('Conectado ao MongoDB');
-    app.listen(5000, () => console.log('Servidor rodando na porta 5000'));
-  })
-  .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+    .then(() => {
+        console.log('Conectado ao MongoDB');
+        app.listen(5000, () => console.log('Servidor rodando na porta 5000'));
+    })
+    .catch(err => console.error('Erro ao conectar ao MongoDB:', err));
+
+const authRoutes = require('./routes/authRoutes');
+app.use('/api/auth', authRoutes);
