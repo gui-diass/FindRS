@@ -22,11 +22,10 @@ export default function Home() {
   const containerStyle = {
     display: 'flex',
     flexDirection: 'column',
-    justifyContent: 'center',
     alignItems: 'center',
-    height: '100vh',
-    padding: '16px',
-    textAlign: 'center',
+    paddingTop: '100px',
+    paddingLeft: '16px',
+    paddingRight: '16px',
   }
 
   return (
@@ -39,7 +38,7 @@ export default function Home() {
       >
         Abrigo
       </button>
-
+      
       <button
         style={buttonStyle}
         onClick={() => navigate('/busca')}
