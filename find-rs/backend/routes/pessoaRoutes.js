@@ -35,12 +35,11 @@ router.post('/', upload.single('foto'), async (req, res) => {
 });
 
 router.get('/', async (req, res) => {
+    const { abrigoId } = req.query;
     try {
-        const { abrigoId } = req.query;
         const pessoas = await Pessoa.find({ abrigoId });
         res.json(pessoas);
     } catch (err) {
-        console.error('Erro ao buscar pessoas:', err);
         res.status(500).json({ error: 'Erro ao buscar pessoas' });
     }
 });

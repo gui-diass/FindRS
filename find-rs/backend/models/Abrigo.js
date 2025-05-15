@@ -6,7 +6,11 @@ const abrigoSchema = new mongoose.Schema({
   bairro: String,
   rua: String,
   numero: String,
-  email: String,
+  email: {
+    type: String,
+    required: true,
+    unique: true, // 👈 isso impede duplicatas
+  },
   senha: String, // por enquanto sem criptografia
 }, { timestamps: true });
 

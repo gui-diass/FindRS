@@ -3,25 +3,40 @@ import axios from 'axios';
 
 export default function Busca() {
   const [fotoBusca, setFotoBusca] = useState(null);
-  const [resultado, setResultado] = useState([]);
+  const [resultado, setResultado] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [mensagem, setMensagem] = useState("");
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!fotoBusca) return alert('Envie uma foto para buscar.');
+
+    if (!fotoBusca) {
+      setMensagem("Selecione uma imagem antes de enviar.");
+      return;
+    }
 
     const formData = new FormData();
-    formData.append('foto', fotoBusca);
+    formData.append("foto", fotoBusca);
+
+    setLoading(true);
+    setMensagem("");
 
     try {
-      setLoading(true);
-      const res = await axios.post('http://localhost:5000/api/buscar', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
+      const res = await axios.post("http://localhost:5001/api/buscar", formData, {
+        headers: {
+          "Content-Type": "multipart/form-data",
+        },
       });
+
       setResultado(res.data);
-    } catch (err) {
-      console.error('Erro ao buscar pessoa:', err);
-      alert('Erro ao processar a busca.');
+    } catch (error) {
+      console.error("Erro ao buscar pessoa:", error);
+      if (error.response && error.response.status === 404) {
+        setResultado(null);
+        setMensagem("Nenhuma pessoa compatível foi encontrada.");
+      } else {
+        setMensagem("Erro ao buscar. Tente novamente.");
+      }
     } finally {
       setLoading(false);
     }
@@ -30,14 +45,7 @@ export default function Busca() {
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
       <h2>Buscar Pessoa por Foto</h2>
-      <div style={{
-        display: 'flex',
-        flexDirection: 'column',
-        justifyContent: 'center',
-        alignItems: 'center',
-        padding: '20px',
-        textAlign: 'center'
-      }}></div>
+
       <form onSubmit={handleSubmit} style={{ marginBottom: '20px' }}>
         <input
           type="file"
@@ -63,20 +71,30 @@ export default function Busca() {
       </form>
 
       {loading && <p>Buscando...</p>}
+      {mensagem && <p style={{ color: "red", marginTop: "1rem" }}>{mensagem}</p>}
 
-      <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: '20px' }}>
-        {resultado.map((pessoa) => (
-          <div key={pessoa._id} style={{ border: '1px solid #000', padding: '10px', borderRadius: '8px', width: '200px' }}>
+      {resultado?.foto && (
+        <div style={{
+          display: 'flex',
+          justifyContent: 'center',
+          marginTop: '20px'
+        }}>
+          <div style={{
+            border: '1px solid #000',
+            padding: '10px',
+            borderRadius: '8px',
+            width: '200px'
+          }}>
             <img
-              src={`http://localhost:5000/uploads/${pessoa.foto}`}
-              alt={pessoa.nome}
+              src={`http://localhost:5000/uploads/${resultado.foto}`}
+              alt={resultado.nome}
               style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '6px' }}
             />
-            <p><strong>{pessoa.nome}</strong></p>
-            <p style={{ fontSize: '0.9em' }}>Abrigo: {pessoa.abrigo?.nome || 'Desconhecido'}</p>
+            <p><strong>{resultado.nome || 'Nome não disponível'}</strong></p>
+            <p style={{ fontSize: '0.9em' }}>Abrigo: {resultado.abrigo?.nome || 'Desconhecido'}</p>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 }
