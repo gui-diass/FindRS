@@ -3,12 +3,19 @@ from flask_cors import CORS
 from deepface import DeepFace
 import os
 from werkzeug.utils import secure_filename
+from pymongo import MongoClient
+from bson import ObjectId
 
-UPLOADS_FOLDER = "uploads"  # ajusta conforme o caminho da sua pasta de imagens
-
+UPLOADS_FOLDER = "uploads"
 app = Flask(__name__)
 CORS(app)
 app.config['UPLOAD_FOLDER'] = UPLOADS_FOLDER
+
+# Conexão com o MongoDB
+client = MongoClient("mongodb://localhost:27017/")
+db = client["findrs"]
+pessoas_collection = db["pessoas"]
+abrigos_collection = db["abrigos"]
 
 @app.route('/api/buscar', methods=['POST'])
 def buscar_pessoa():
@@ -23,7 +30,6 @@ def buscar_pessoa():
     foto.save(caminho_temporario)
 
     try:
-        # Encontra todas as imagens cadastradas
         arquivos = [
             os.path.join(app.config['UPLOAD_FOLDER'], f)
             for f in os.listdir(app.config['UPLOAD_FOLDER'])
@@ -36,7 +42,8 @@ def buscar_pessoa():
         resultado = DeepFace.find(
             img_path=caminho_temporario,
             db_path=app.config['UPLOAD_FOLDER'],
-            enforce_detection=False
+            enforce_detection=False,
+            model_name="VGG-Face"  # ou "Facenet", "ArcFace" para melhorar
         )
 
         if resultado and len(resultado[0]) > 0:
@@ -48,17 +55,35 @@ def buscar_pessoa():
 
             if pessoa_encontrada['distance'] > 0.55:
                 print("Sem correspondência confiável.")
-                return jsonify({ "erro": "Nenhuma pessoa compatível encontrada." }), 404
+                return jsonify({"erro": "Nenhuma pessoa compatível encontrada."}), 404
 
-            return jsonify({
-                'foto': nome_arquivo
-            })
+            # Buscar pessoa no banco de dados
+            pessoa = pessoas_collection.find_one({"foto": nome_arquivo})
+            if not pessoa:
+                return jsonify({'error': 'Pessoa não encontrada no banco de dados'}), 404
+
+            abrigo = abrigos_collection.find_one({"_id": ObjectId(pessoa["abrigoId"])})
+
+            resposta = {
+                "nome": pessoa.get("nome", "Nome não disponível"),
+                "foto": pessoa["foto"],
+                "abrigo": {
+                    "nome": abrigo.get("nome", "Desconhecido"),
+                    "cidade": abrigo.get("cidade", ""),
+                    "bairro": abrigo.get("bairro", ""),
+                    "rua": abrigo.get("rua", ""),
+                    "numero": abrigo.get("numero", "")
+                }
+            }
+
+            return jsonify(resposta)
 
         return jsonify({'message': 'Nenhuma correspondência encontrada'}), 404
 
     except Exception as e:
         print("Erro ao processar busca:", str(e))
         return jsonify({'error': 'Erro ao comparar imagens'}), 500
+
     finally:
         if os.path.exists(caminho_temporario):
             os.remove(caminho_temporario)

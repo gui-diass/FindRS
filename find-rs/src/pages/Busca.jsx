@@ -91,7 +91,11 @@ export default function Busca() {
               style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '6px' }}
             />
             <p><strong>{resultado.nome || 'Nome não disponível'}</strong></p>
-            <p style={{ fontSize: '0.9em' }}>Abrigo: {resultado.abrigo?.nome || 'Desconhecido'}</p>
+            <p style={{ fontSize: '0.9em' }}>
+              Abrigo: {resultado.abrigo?.nome || 'Desconhecido'}<br />
+              Endereço: {resultado.abrigo?.rua}, {resultado.abrigo?.numero}, {resultado.abrigo?.bairro}, {resultado.abrigo?.cidade}
+            </p>
+
           </div>
         </div>
       )}
