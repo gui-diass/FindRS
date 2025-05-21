@@ -1,4 +1,4 @@
-Sobre o projeto
+<h1>Sobre o projeto</h1>
 O Find-RS é um sistema full stack desenvolvido para facilitar o gerenciamento de abrigos e a busca por pessoas desaparecidas através de reconhecimento facial. Criado como resposta às enchentes no Rio Grande do Sul em 2024, o projeto permite que abrigos registrem pessoas e que familiares realizem buscas utilizando fotos.
 
 Tecnologias utilizadas
