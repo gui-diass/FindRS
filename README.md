@@ -1,51 +1,52 @@
-<h1>Sobre o projeto</h1>
-O Find-RS é um sistema full stack desenvolvido para facilitar o gerenciamento de abrigos e a busca por pessoas desaparecidas através de reconhecimento facial. Criado como resposta às enchentes no Rio Grande do Sul em 2024, o projeto permite que abrigos registrem pessoas e que familiares realizem buscas utilizando fotos.
+# Find-RS – Sistema de Gerenciamento de Abrigos com Reconhecimento Facial
 
-<h3>Tecnologias utilizadas</h3>
-Frontend
-ReactJS – Interface responsiva e moderna
+## Sobre o Projeto
 
-Axios – Comunicação com backend via API REST
+O **Find-RS** é um sistema full stack desenvolvido para facilitar o gerenciamento de abrigos e a busca por pessoas desaparecidas através de reconhecimento facial. Criado como resposta às enchentes no Rio Grande do Sul em 2024, o projeto permite que abrigos registrem pessoas e que familiares realizem buscas utilizando fotos.
 
-Backend
-Node.js com Express – Criação das rotas e lógica de negócio
+---
 
-MongoDB com Mongoose – Banco de dados não relacional para armazenar informações de abrigos e pessoas
+## Tecnologias Utilizadas
 
-Multer – Upload e armazenamento de imagens
+### Frontend
+- **ReactJS** – Interface responsiva e moderna
+- **Axios** – Comunicação com backend via API REST
 
-JWT e bcrypt – Autenticação e segurança
+### Backend
+- **Node.js com Express** – Criação das rotas e lógica de negócio
+- **MongoDB com Mongoose** – Banco de dados não relacional para armazenar informações de abrigos e pessoas
+- **Multer** – Upload e armazenamento de imagens
+- **JWT e bcrypt** – Autenticação e segurança
 
-Microserviço de Reconhecimento Facial
-Python com Flask – Servidor para processamento das imagens
+### Microserviço de Reconhecimento Facial
+- **Python com Flask** – Servidor para processamento das imagens
+- **DeepFace** – Reconhecimento facial utilizando modelos pré-treinados
+- **TensorFlow e OpenCV** – Suporte ao processamento de imagens
 
-DeepFace – Reconhecimento facial utilizando modelos pré-treinados
+---
 
-TensorFlow e OpenCV – Suporte ao processamento de imagens
+## Funcionalidades
 
-Funcionalidades
-Cadastro e autenticação de abrigos
+- Cadastro e autenticação de abrigos
+- Registro de pessoas nos abrigos, com upload de foto
+- Visualização e exclusão de abrigos e pessoas
+- Busca por pessoa utilizando reconhecimento facial
+- Exclusão automática de fotos ao remover registros
+- Interface responsiva para desktop e mobile
 
-Registro de pessoas nos abrigos, com upload de foto
+---
 
-Visualização e exclusão de abrigos e pessoas
+## Como Rodar o Projeto
 
-Busca por pessoa utilizando reconhecimento facial
+### Pré-requisitos
 
-Exclusão automática de fotos ao remover registros
+- Node.js
+- MongoDB
+- Python 3.x com pip
 
-Interface responsiva para desktop e mobile
+### Instalação das Dependências
 
-Como rodar o projeto
-Pré-requisitos
-Node.js
+**Dependências do Python:**
 
-MongoDB
-
-Python 3.x com pip
-
-Instalar dependências do Python:
+```bash
 pip install flask deepface opencv-python tensorflow
-
-Passos
-Clone o repositório:
