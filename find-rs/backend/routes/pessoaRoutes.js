@@ -1,77 +1,84 @@
 const express = require('express');
 const router = express.Router();
-const multer = require('multer');
-const path = require('path');
 const Pessoa = require('../models/Pessoa');
+const fs = require('fs');
+const path = require('path');
+const multer = require('multer');
 
-// Configurar destino e nome do arquivo
+// Configuração do multer para upload de fotos
 const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        cb(null, 'uploads/');
-    },
-    filename: (req, file, cb) => {
-        const nomeUnico = Date.now() + '-' + file.originalname;
-        cb(null, nomeUnico);
-    },
+  destination: (req, file, cb) => cb(null, 'uploads'),
+  filename: (req, file, cb) => cb(null, Date.now() + '-' + file.originalname),
 });
-
 const upload = multer({ storage });
 
+// Cadastrar pessoa com foto
 router.post('/', upload.single('foto'), async (req, res) => {
-    try {
-        const { nome, abrigoId } = req.body;
-        const novaPessoa = new Pessoa({
-            nome,
-            foto: req.file.filename,
-            abrigoId,
-        });
-
-        const salva = await novaPessoa.save();
-        res.status(201).json(salva);
-    } catch (err) {
-        console.error('Erro ao salvar pessoa:', err);
-        res.status(500).json({ error: 'Erro ao salvar pessoa' });
-    }
+  try {
+    const { nome, abrigoId } = req.body;
+    const novaPessoa = new Pessoa({
+      nome,
+      foto: req.file.filename,
+      abrigoId,
+    });
+    await novaPessoa.save();
+    res.status(201).json(novaPessoa);
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: 'Erro ao salvar pessoa' });
+  }
 });
 
+// Listar pessoas por abrigo
 router.get('/', async (req, res) => {
+  try {
     const { abrigoId } = req.query;
-    try {
-        const pessoas = await Pessoa.find({ abrigoId });
-        res.json(pessoas);
-    } catch (err) {
-        res.status(500).json({ error: 'Erro ao buscar pessoas' });
-    }
+    const pessoas = await Pessoa.find({ abrigoId });
+    res.json(pessoas);
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao buscar pessoas' });
+  }
 });
 
+// ⚠️ IMPORTANTE: rota de deletar todas as pessoas vem ANTES da rota /:id
 
-const fs = require('fs');
+// Excluir todas as pessoas de um abrigo
+router.delete('/todas/:abrigoId', async (req, res) => {
+  try {
+    const { abrigoId } = req.params;
+    const pessoas = await Pessoa.find({ abrigoId });
 
+    for (const pessoa of pessoas) {
+      const caminhoImagem = path.join(__dirname, '..', 'uploads', pessoa.foto);
+      if (fs.existsSync(caminhoImagem)) {
+        fs.unlinkSync(caminhoImagem); // Remove a imagem
+      }
+      await Pessoa.findByIdAndDelete(pessoa._id); // Remove do banco
+    }
+
+    res.status(200).json({ message: 'Todas as pessoas foram excluídas com sucesso.' });
+  } catch (err) {
+    console.error('Erro ao excluir todas as pessoas:', err);
+    res.status(500).json({ error: 'Erro ao excluir todas as pessoas.' });
+  }
+});
+
+// Excluir uma pessoa
 router.delete('/:id', async (req, res) => {
-    try {
-        const pessoa = await Pessoa.findById(req.params.id);
-        if (!pessoa) return res.status(404).json({ error: 'Pessoa não encontrada' });
+  try {
+    const pessoa = await Pessoa.findById(req.params.id);
+    if (!pessoa) return res.status(404).json({ error: 'Pessoa não encontrada' });
 
-        const caminhoImagem = path.join(__dirname, '..', 'uploads', pessoa.foto);
-
-        await Pessoa.findByIdAndDelete(req.params.id);
-
-        fs.unlink(caminhoImagem, (err) => {
-            if (err) {
-                console.error('Erro ao deletar imagem:', err);
-            } else {
-                console.log('Imagem deletada com sucesso:', pessoa.foto);
-            }
-        });
-
-        res.status(204).end();
-    } catch (err) {
-        console.error('Erro ao excluir pessoa:', err);
-        res.status(500).json({ error: 'Erro ao excluir pessoa' });
+    const caminhoImagem = path.join(__dirname, '..', 'uploads', pessoa.foto);
+    if (fs.existsSync(caminhoImagem)) {
+      fs.unlinkSync(caminhoImagem);
     }
+
+    await Pessoa.findByIdAndDelete(req.params.id);
+    res.status(200).json({ message: 'Pessoa excluída com sucesso' });
+  } catch (err) {
+    res.status(500).json({ error: 'Erro ao excluir pessoa' });
+  }
 });
-
-
-
 
 module.exports = router;

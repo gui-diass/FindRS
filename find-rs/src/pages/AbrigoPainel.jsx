@@ -28,6 +28,20 @@ export default function AbrigoPainel() {
         }
     };
 
+    const handleExcluirTodasPessoas = async () => {
+        const confirmar = window.confirm('Tem certeza que deseja excluir TODAS as pessoas deste abrigo? Essa ação é permanente.');
+        if (!confirmar) return;
+        try {
+            const abrigoId = localStorage.getItem('abrigoId');
+            await axios.delete(`http://localhost:5000/api/pessoas/todas/${abrigoId}`);
+            alert('Todas as pessoas foram excluídas com sucesso.');
+            fetchPessoas();
+        } catch (err) {
+            console.error('Erro ao excluir todas as pessoas:', err);
+            alert('Erro ao excluir todas as pessoas.');
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -68,21 +82,37 @@ export default function AbrigoPainel() {
         <div style={{ padding: '20px', textAlign: 'center' }}>
             <h2>Cadastro de Pessoas Abrigadas</h2>
 
-            <button
-                onClick={() => setShowUploadModal(true)}
-                style={{
-                    padding: '12px 24px',
-                    backgroundColor: '#4f46e5',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontSize: '16px',
-                    cursor: 'pointer',
-                    marginTop: '20px'
-                }}
-            >
-                Enviar foto
-            </button>
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
+                <button
+                    onClick={() => setShowUploadModal(true)}
+                    style={{
+                        padding: '12px 24px',
+                        backgroundColor: '#4f46e5',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Enviar foto
+                </button>
+
+                <button
+                    onClick={handleExcluirTodasPessoas}
+                    style={{
+                        padding: '12px 24px',
+                        backgroundColor: '#dc2626',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        fontSize: '16px',
+                        cursor: 'pointer'
+                    }}
+                >
+                    Excluir Todas as Pessoas
+                </button>
+            </div>
 
             {showUploadModal && (
                 <div style={{
