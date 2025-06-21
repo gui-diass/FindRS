@@ -8,13 +8,13 @@ export default function Abrigo() {
   const [form, setForm] = useState({
     nome: '', cidade: '', bairro: '', rua: '', numero: '', email: '', senha: ''
   });
-  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const [abrigos, setAbrigados] = useState([]);
   const [abrigoSelecionado, setAbrigoSelecionado] = useState(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [loginData, setLoginData] = useState({ email: '', senha: '' });
   const [loginErro, setLoginErro] = useState('');
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -32,10 +32,6 @@ export default function Abrigo() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.senha.length < 8) {
-      alert('A senha precisa ter no mínimo 8 caracteres.');
-      return;
-    }
     try {
       await axios.post('http://localhost:5000/api/abrigos', form);
       setShowModal(false);
@@ -64,7 +60,7 @@ export default function Abrigo() {
     }
   };
 
-  useEffect(() => { fetchAbrigos() }, []);
+  useEffect(() => { fetchAbrigos(); }, []);
 
   const fabStyle = {
     position: 'fixed', bottom: '24px', right: '24px', width: '60px', height: '60px', borderRadius: '50%',
@@ -107,6 +103,7 @@ export default function Abrigo() {
 
       <button style={fabStyle} onClick={() => setShowModal(true)}>+</button>
 
+      {/* Modal Criar Abrigo */}
       {showModal && (
         <div style={modalStyle}>
           <div style={formStyle}>
@@ -125,16 +122,46 @@ export default function Abrigo() {
                   required
                 />
               ))}
+              <input
+                style={inputStyle}
+                type="password"
+                name="senha"
+                placeholder="Senha (mínimo 8 caracteres)"
+                value={form.senha}
+                onChange={handleInputChange}
+                required
+                minLength={8}
+              />
+              <button type="submit" style={submitStyle}>Criar</button>
+            </form>
+          </div>
+        </div>
+      )}
 
-              {/* Campo de Senha com Olho */}
+      {/* Modal Login */}
+      {showLoginModal && (
+        <div style={modalStyle}>
+          <div style={formStyle}>
+            <button onClick={() => setShowLoginModal(false)} style={closeButtonStyle}>×</button>
+            <h3>Entrar no Abrigo</h3>
+            <form onSubmit={handleLogin}>
+              <input
+                style={inputStyle}
+                type="email"
+                placeholder="E-mail"
+                value={loginData.email}
+                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
+                required
+              />
+
+              {/* Campo senha com olho */}
               <div style={{ position: 'relative', width: '100%' }}>
                 <input
                   style={inputStyle}
                   type={mostrarSenha ? 'text' : 'password'}
-                  name="senha"
-                  placeholder="Senha (mín. 8 caracteres)"
-                  value={form.senha}
-                  onChange={handleInputChange}
+                  placeholder="Senha"
+                  value={loginData.senha}
+                  onChange={(e) => setLoginData({ ...loginData, senha: e.target.value })}
                   required
                 />
                 <button
@@ -156,34 +183,6 @@ export default function Abrigo() {
                 </button>
               </div>
 
-              <button type="submit" style={submitStyle}>Criar</button>
-            </form>
-          </div>
-        </div>
-      )}
-
-      {showLoginModal && (
-        <div style={modalStyle}>
-          <div style={formStyle}>
-            <button onClick={() => setShowLoginModal(false)} style={closeButtonStyle}>×</button>
-            <h3>Entrar no Abrigo</h3>
-            <form onSubmit={handleLogin}>
-              <input
-                style={inputStyle}
-                type="email"
-                placeholder="E-mail"
-                value={loginData.email}
-                onChange={(e) => setLoginData({ ...loginData, email: e.target.value })}
-                required
-              />
-              <input
-                style={inputStyle}
-                type="password"
-                placeholder="Senha"
-                value={loginData.senha}
-                onChange={(e) => setLoginData({ ...loginData, senha: e.target.value })}
-                required
-              />
               {loginErro && <p style={{ color: 'red' }}>{loginErro}</p>}
               <button type="submit" style={submitStyle}>Entrar</button>
             </form>
