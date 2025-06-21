@@ -1,14 +1,16 @@
 const bcrypt = require('bcryptjs');
 const Abrigo = require('../models/Abrigo');
 const Pessoa = require('../models/Pessoa');
-const fs = require('fs');
-const path = require('path');
 
 exports.criarAbrigo = async (req, res) => {
   try {
     const { senha, ...resto } = req.body;
 
-    const hash = await bcrypt.hash(senha, 10); // ← criptografa a senha
+    if (!senha || senha.length < 8) {
+      return res.status(400).json({ error: 'A senha deve ter no mínimo 8 caracteres.' });
+    }
+
+    const hash = await bcrypt.hash(senha, 10);
     const novoAbrigo = new Abrigo({ ...resto, senha: hash });
 
     const salvo = await novoAbrigo.save();

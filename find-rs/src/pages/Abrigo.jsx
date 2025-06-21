@@ -1,50 +1,56 @@
-import { useEffect, useState } from 'react'
-import axios from 'axios'
-import './index.css'
+import { useEffect, useState } from 'react';
+import axios from 'axios';
+import './index.css';
+import { FaEye, FaEyeSlash } from 'react-icons/fa';
 
 export default function Abrigo() {
-  const [showModal, setShowModal] = useState(false)
+  const [showModal, setShowModal] = useState(false);
   const [form, setForm] = useState({
     nome: '', cidade: '', bairro: '', rua: '', numero: '', email: '', senha: ''
-  })
+  });
+  const [mostrarSenha, setMostrarSenha] = useState(false);
 
-  const [abrigos, setAbrigados] = useState([])
-  const [abrigoSelecionado, setAbrigoSelecionado] = useState(null)
-  const [showLoginModal, setShowLoginModal] = useState(false)
-  const [loginData, setLoginData] = useState({ email: '', senha: '' })
-  const [loginErro, setLoginErro] = useState('')
+  const [abrigos, setAbrigados] = useState([]);
+  const [abrigoSelecionado, setAbrigoSelecionado] = useState(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginData, setLoginData] = useState({ email: '', senha: '' });
+  const [loginErro, setLoginErro] = useState('');
 
   const handleInputChange = (e) => {
-    const { name, value } = e.target
-    setForm((prev) => ({ ...prev, [name]: value }))
-  }
+    const { name, value } = e.target;
+    setForm((prev) => ({ ...prev, [name]: value }));
+  };
 
   const fetchAbrigos = async () => {
     try {
-      const res = await axios.get('http://localhost:5000/api/abrigos')
-      setAbrigados(res.data)
+      const res = await axios.get('http://localhost:5000/api/abrigos');
+      setAbrigados(res.data);
     } catch (err) {
-      console.error('Erro ao buscar abrigos:', err)
+      console.error('Erro ao buscar abrigos:', err);
     }
-  }
+  };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    try {
-      await axios.post('http://localhost:5000/api/abrigos', form)
-      setShowModal(false)
-      setForm({ nome: '', cidade: '', bairro: '', rua: '', numero: '', email: '', senha: '' })
-      fetchAbrigos()
-    } catch (err) {
-      console.error('Erro ao criar abrigo:', err)
+    e.preventDefault();
+    if (form.senha.length < 8) {
+      alert('A senha precisa ter no mínimo 8 caracteres.');
+      return;
     }
-  }
+    try {
+      await axios.post('http://localhost:5000/api/abrigos', form);
+      setShowModal(false);
+      setForm({ nome: '', cidade: '', bairro: '', rua: '', numero: '', email: '', senha: '' });
+      fetchAbrigos();
+    } catch (err) {
+      console.error('Erro ao criar abrigo:', err);
+    }
+  };
 
   const abrirLoginParaAbrigo = (abrigo) => {
     setAbrigoSelecionado(abrigo);
     setShowLoginModal(true);
     setLoginErro('');
-  }
+  };
 
   const handleLogin = async (e) => {
     e.preventDefault();
@@ -56,35 +62,35 @@ export default function Abrigo() {
     } catch (err) {
       setLoginErro('E-mail ou senha incorretos.');
     }
-  }
+  };
 
-  useEffect(() => { fetchAbrigos() }, [])
+  useEffect(() => { fetchAbrigos() }, []);
 
   const fabStyle = {
     position: 'fixed', bottom: '24px', right: '24px', width: '60px', height: '60px', borderRadius: '50%',
     backgroundColor: '#4f46e5', color: '#fff', fontSize: '32px', border: 'none', boxShadow: '0 4px 12px rgba(0, 0, 0, 0.2)', cursor: 'pointer'
-  }
+  };
 
   const modalStyle = {
     position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
     backgroundColor: 'rgba(0,0,0,0.4)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
-  }
+  };
 
   const formStyle = {
     position: 'relative', background: '#fff', padding: '32px', borderRadius: '12px', width: '90%', maxWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)'
-  }
+  };
 
   const inputStyle = {
     width: '100%', padding: '12px', margin: '10px 0', borderRadius: '8px', border: '1px solid #ccc'
-  }
+  };
 
   const submitStyle = {
     width: '100%', padding: '12px', backgroundColor: '#4f46e5', color: '#fff', border: 'none', borderRadius: '8px', cursor: 'pointer', fontWeight: 'bold', fontSize: '1rem'
-  }
+  };
 
   const closeButtonStyle = {
     position: 'absolute', top: '12px', right: '16px', background: 'transparent', border: 'none', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', color: '#333'
-  }
+  };
 
   return (
     <div style={{ padding: '20px' }}>
@@ -107,11 +113,11 @@ export default function Abrigo() {
             <button onClick={() => setShowModal(false)} style={closeButtonStyle}>×</button>
             <h3 style={{ marginBottom: '20px' }}>Criar Abrigo</h3>
             <form onSubmit={handleSubmit}>
-              {['nome', 'cidade', 'bairro', 'rua', 'numero', 'email', 'senha'].map((field) => (
+              {['nome', 'cidade', 'bairro', 'rua', 'numero', 'email'].map((field) => (
                 <input
                   key={field}
                   style={inputStyle}
-                  type={field === 'senha' ? 'password' : field === 'email' ? 'email' : 'text'}
+                  type={field === 'email' ? 'email' : 'text'}
                   name={field}
                   placeholder={field.charAt(0).toUpperCase() + field.slice(1)}
                   value={form[field]}
@@ -119,6 +125,37 @@ export default function Abrigo() {
                   required
                 />
               ))}
+
+              {/* Campo de Senha com Olho */}
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  style={inputStyle}
+                  type={mostrarSenha ? 'text' : 'password'}
+                  name="senha"
+                  placeholder="Senha (mín. 8 caracteres)"
+                  value={form.senha}
+                  onChange={handleInputChange}
+                  required
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenha((prev) => !prev)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    color: '#4f46e5'
+                  }}
+                >
+                  {mostrarSenha ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+
               <button type="submit" style={submitStyle}>Criar</button>
             </form>
           </div>
@@ -154,5 +191,5 @@ export default function Abrigo() {
         </div>
       )}
     </div>
-  )
+  );
 }
