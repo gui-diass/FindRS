@@ -40,18 +40,6 @@ export default function Abrigo() {
     }
   }
 
-  const handleDelete = async (id) => {
-    const confirmar = window.confirm('Tem certeza que deseja excluir este abrigo?')
-    if (!confirmar) return
-
-    try {
-      await axios.delete(`http://localhost:5000/api/abrigos/${id}`)
-      fetchAbrigos()
-    } catch (err) {
-      console.error('Erro ao excluir abrigo:', err)
-    }
-  }
-
   const abrirLoginParaAbrigo = (abrigo) => {
     setAbrigoSelecionado(abrigo);
     setShowLoginModal(true);
@@ -98,10 +86,6 @@ export default function Abrigo() {
     position: 'absolute', top: '12px', right: '16px', background: 'transparent', border: 'none', fontSize: '20px', fontWeight: 'bold', cursor: 'pointer', color: '#333'
   }
 
-  const deleteButtonStyle = {
-    marginTop: '12px', padding: '6px 12px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer'
-  }
-
   return (
     <div style={{ padding: '20px' }}>
       <h2 style={{ textAlign: 'center', marginBottom: '20px' }}>Área do Abrigo</h2>
@@ -111,7 +95,6 @@ export default function Abrigo() {
           <div key={index} className="card-abrigo" onClick={() => abrirLoginParaAbrigo(abrigo)} style={{ cursor: 'pointer' }}>
             <h3>{abrigo.nome}</h3>
             <p>{abrigo.rua}, {abrigo.numero} - {abrigo.bairro}, {abrigo.cidade}</p>
-            <button style={deleteButtonStyle} onClick={(e) => { e.stopPropagation(); handleDelete(abrigo._id) }}>Excluir</button>
           </div>
         ))}
       </div>

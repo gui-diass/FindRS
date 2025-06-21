@@ -1,5 +1,8 @@
 const bcrypt = require('bcryptjs');
 const Abrigo = require('../models/Abrigo');
+const Pessoa = require('../models/Pessoa');
+const fs = require('fs');
+const path = require('path');
 
 exports.criarAbrigo = async (req, res) => {
   try {
@@ -30,10 +33,26 @@ exports.listarAbrigos = async (req, res) => {
 
 exports.deletarAbrigo = async (req, res) => {
   try {
-    await Abrigo.findByIdAndDelete(req.params.id);
-    res.status(204).end();
+    const abrigoId = req.params.id;
+
+    // Verificar se o abrigo existe
+    const abrigo = await Abrigo.findById(abrigoId);
+    if (!abrigo) {
+      return res.status(404).json({ error: 'Abrigo não encontrado.' });
+    }
+
+    // Verificar se ainda existem pessoas vinculadas ao abrigo
+    const pessoas = await Pessoa.find({ abrigoId });
+    if (pessoas.length > 0) {
+      return res.status(400).json({ error: 'Exclua todas as pessoas antes de deletar o abrigo.' });
+    }
+
+    // Excluir o abrigo
+    await Abrigo.findByIdAndDelete(abrigoId);
+
+    res.status(200).json({ message: 'Abrigo excluído com sucesso.' });
   } catch (err) {
-    res.status(500).json({ error: 'Erro ao deletar abrigo' });
+    console.error('Erro ao excluir abrigo:', err);
+    res.status(500).json({ error: 'Erro interno ao excluir abrigo.' });
   }
 };
-
