@@ -1,12 +1,15 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import axios from 'axios';
 
 export default function AbrigoPainel() {
   const [showUploadModal, setShowUploadModal] = useState(false);
   const [nomePessoa, setNomePessoa] = useState('');
   const [foto, setFoto] = useState(null);
+  const [fotoCapturada, setFotoCapturada] = useState(null);
+  const [cameraLigada, setCameraLigada] = useState(false);
+  const [cameraStream, setCameraStream] = useState(null);
+  const videoRef = useRef(null);
   const [pessoas, setPessoas] = useState([]);
-  const [nomeArquivo, setNomeArquivo] = useState("");
 
   const fetchPessoas = async () => {
     try {
@@ -18,42 +21,65 @@ export default function AbrigoPainel() {
     }
   };
 
-  const handleDeletePessoa = async (id) => {
-    const confirmar = window.confirm('Deseja realmente excluir esta pessoa?');
-    if (!confirmar) return;
+  useEffect(() => {
+    fetchPessoas();
+  }, []);
+
+  const abrirCamera = async () => {
     try {
-      await axios.delete(`http://localhost:5000/api/pessoas/${id}`);
-      fetchPessoas();
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      setCameraStream(stream);
+      setCameraLigada(true);
     } catch (err) {
-      console.error('Erro ao excluir pessoa:', err);
+      console.error('Erro ao abrir a câmera:', err);
+      alert('Não foi possível acessar a câmera.');
     }
   };
 
-  const handleExcluirTodasPessoas = async () => {
-    const confirmar = window.confirm('Tem certeza que deseja excluir TODAS as pessoas deste abrigo?');
-    if (!confirmar) return;
-    try {
-      const abrigoId = localStorage.getItem('abrigoId');
-      await axios.delete(`http://localhost:5000/api/pessoas/todas/${abrigoId}`);
-      alert('Todas as pessoas foram excluídas.');
-      fetchPessoas();
-    } catch (err) {
-      console.error('Erro ao excluir todas as pessoas:', err);
-      alert('Erro ao excluir todas as pessoas.');
+  useEffect(() => {
+    if (cameraStream && videoRef.current) {
+      videoRef.current.srcObject = cameraStream;
     }
+  }, [cameraStream]);
+
+  const capturarFoto = () => {
+    if (!videoRef.current) return;
+    const canvas = document.createElement('canvas');
+    canvas.width = videoRef.current.videoWidth;
+    canvas.height = videoRef.current.videoHeight;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(videoRef.current, 0, 0);
+    canvas.toBlob((blob) => {
+      setFotoCapturada(blob);
+      fecharCamera();
+    }, 'image/jpeg');
+  };
+
+  const fecharCamera = () => {
+    if (cameraStream) {
+      cameraStream.getTracks().forEach(track => track.stop());
+    }
+    setCameraLigada(false);
+    setCameraStream(null);
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!foto) {
-      alert('Selecione uma foto antes de enviar.');
+    if (!foto && !fotoCapturada) {
+      alert('Selecione uma foto ou tire uma foto antes de enviar.');
       return;
     }
+
     try {
       const formData = new FormData();
       formData.append('nome', nomePessoa);
-      formData.append('foto', foto);
       formData.append('abrigoId', localStorage.getItem('abrigoId'));
+
+      if (fotoCapturada) {
+        formData.append('foto', fotoCapturada, 'foto-capturada.jpg');
+      } else if (foto) {
+        formData.append('foto', foto);
+      }
 
       await axios.post('http://localhost:5000/api/pessoas', formData, {
         headers: {
@@ -66,7 +92,7 @@ export default function AbrigoPainel() {
       setShowUploadModal(false);
       setNomePessoa('');
       setFoto(null);
-      setNomeArquivo('');
+      setFotoCapturada(null);
       fetchPessoas();
     } catch (err) {
       console.error('Erro ao enviar:', err);
@@ -74,65 +100,111 @@ export default function AbrigoPainel() {
     }
   };
 
-  const handleDeleteAbrigo = async () => {
-    const confirmar = window.confirm('Tem certeza que deseja excluir o abrigo? Esta ação é permanente.');
-    if (!confirmar) return;
-
-    const abrigoId = localStorage.getItem('abrigoId');
-
-    try {
-      await axios.delete(`http://localhost:5000/api/abrigos/${abrigoId}`);
-      alert('Abrigo excluído com sucesso!');
-      localStorage.removeItem('token');
-      localStorage.removeItem('abrigoId');
-      window.location.href = '/';
-    } catch (err) {
-      console.error('Erro ao excluir abrigo:', err);
-      if (err.response && err.response.data && err.response.data.error) {
-        alert(err.response.data.error);
-      } else {
-        alert('Erro ao excluir o abrigo.');
+  const handleDeletePessoa = async (id) => {
+    if (window.confirm('Deseja realmente excluir esta pessoa?')) {
+      try {
+        await axios.delete(`http://localhost:5000/api/pessoas/${id}`);
+        fetchPessoas();
+      } catch (err) {
+        console.error('Erro ao excluir pessoa:', err);
       }
     }
   };
 
-  const buttonStyle = {
-    width: '100%',
-    padding: '14px',
-    backgroundColor: '#4f46e5',
-    color: '#fff',
-    border: 'none',
-    borderRadius: '8px',
-    cursor: 'pointer',
-    fontWeight: 'bold',
-    fontSize: '1rem',
-    marginBottom: '12px'
+  const handleExcluirTodasPessoas = async () => {
+    if (window.confirm('Tem certeza que deseja excluir TODAS as pessoas deste abrigo?')) {
+      try {
+        const abrigoId = localStorage.getItem('abrigoId');
+        await axios.delete(`http://localhost:5000/api/pessoas/todas/${abrigoId}`);
+        alert('Todas as pessoas foram excluídas.');
+        fetchPessoas();
+      } catch (err) {
+        console.error('Erro ao excluir todas as pessoas:', err);
+        alert('Erro ao excluir todas as pessoas.');
+      }
+    }
   };
 
-  useEffect(() => {
-    fetchPessoas();
-  }, []);
+  const handleDeleteAbrigo = async () => {
+    if (window.confirm('Tem certeza que deseja excluir o abrigo? Esta ação é permanente.')) {
+      const abrigoId = localStorage.getItem('abrigoId');
+      try {
+        await axios.delete(`http://localhost:5000/api/abrigos/${abrigoId}`);
+        alert('Abrigo excluído com sucesso!');
+        localStorage.removeItem('token');
+        localStorage.removeItem('abrigoId');
+        window.location.href = '/';
+      } catch (err) {
+        console.error('Erro ao excluir abrigo:', err);
+        if (err.response?.data?.error) {
+          alert(err.response.data.error);
+        } else {
+          alert('Erro ao excluir o abrigo.');
+        }
+      }
+    }
+  };
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
-      <h2 style={{ marginBottom: '24px', fontSize: '1.8rem' }}>Cadastro de Pessoas Abrigadas</h2>
+      <h2 style={{ marginBottom: '20px', fontSize: '1.8rem' }}>Cadastro de Pessoas Abrigadas</h2>
 
       {/* Botões de ação */}
       <div style={{
-        maxWidth: '400px',
-        margin: '0 auto 30px auto',
         display: 'flex',
-        flexDirection: 'column'
+        flexWrap: 'wrap',
+        justifyContent: 'center',
+        gap: '12px',
+        marginBottom: '30px',
+        maxWidth: '600px',
+        marginLeft: 'auto',
+        marginRight: 'auto'
       }}>
-        <button onClick={() => setShowUploadModal(true)} style={{ ...buttonStyle, backgroundColor: '#4f46e5' }}>
+        <button
+          onClick={() => setShowUploadModal(true)}
+          style={{
+            flex: '1 1 180px',
+            padding: '12px',
+            backgroundColor: '#4f46e5',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
           Enviar foto
         </button>
 
-        <button onClick={handleExcluirTodasPessoas} style={{ ...buttonStyle, backgroundColor: '#dc2626' }}>
+        <button
+          onClick={handleExcluirTodasPessoas}
+          style={{
+            flex: '1 1 180px',
+            padding: '12px',
+            backgroundColor: '#dc2626',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
           Excluir Todas as Pessoas
         </button>
 
-        <button onClick={handleDeleteAbrigo} style={{ ...buttonStyle, backgroundColor: '#000' }}>
+        <button
+          onClick={handleDeleteAbrigo}
+          style={{
+            flex: '1 1 180px',
+            padding: '12px',
+            backgroundColor: '#000',
+            color: '#fff',
+            border: 'none',
+            borderRadius: '8px',
+            cursor: 'pointer',
+            fontWeight: 'bold'
+          }}
+        >
           Excluir Abrigo
         </button>
       </div>
@@ -142,17 +214,22 @@ export default function AbrigoPainel() {
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
           backgroundColor: 'rgba(0,0,0,0.4)',
-          display: 'flex', justifyContent: 'center', alignItems: 'center',
+          display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000
         }}>
           <div style={{
-            background: '#fff', padding: '32px', borderRadius: '12px',
-            width: '90%', maxWidth: '400px', boxShadow: '0 4px 20px rgba(0,0,0,0.2)', textAlign: 'left', position: 'relative'
+            background: '#fff', padding: '24px', borderRadius: '12px',
+            width: '90%', maxWidth: '400px', textAlign: 'left', position: 'relative'
           }}>
-            <button onClick={() => setShowUploadModal(false)} style={{
-              position: 'absolute', top: '12px', right: '16px', background: 'transparent', border: 'none', fontSize: '30px', cursor: 'pointer'
+            <button onClick={() => {
+              setShowUploadModal(false);
+              fecharCamera();
+              setFoto(null);
+              setFotoCapturada(null);
+            }} style={{
+              position: 'absolute', top: '10px', right: '14px', background: 'transparent', border: 'none', fontSize: '24px', cursor: 'pointer'
             }}>×</button>
 
-            <h3 style={{ marginBottom: '20px' }}>Enviar Foto de Pessoa Abrigada</h3>
+            <h3>Enviar Foto de Pessoa Abrigada</h3>
 
             <form onSubmit={handleSubmit}>
               <input
@@ -162,47 +239,97 @@ export default function AbrigoPainel() {
                 onChange={(e) => setNomePessoa(e.target.value)}
                 required
                 style={{
-                  width: '100%', padding: '10px', marginBottom: '16px',
-                  borderRadius: '8px', border: '1px solid #ccc'
+                  width: '100%',
+                  marginBottom: '10px',
+                  padding: '10px',
+                  borderRadius: '6px',
+                  border: '1px solid #ccc'
                 }}
               />
 
-              {/* Campo arquivo escondido */}
               <input
                 type="file"
                 accept="image/*"
-                onChange={(e) => {
-                  setFoto(e.target.files[0]);
-                  if (e.target.files[0]) setNomeArquivo(e.target.files[0].name);
-                }}
-                id="uploadPessoa"
-                style={{ display: 'none' }}
+                onChange={(e) => setFoto(e.target.files[0])}
+                style={{ marginBottom: '10px', width: '100%' }}
               />
 
-              {/* Botão para selecionar imagem */}
-              <button
-                type="button"
-                onClick={() => document.getElementById('uploadPessoa').click()}
-                style={buttonStyle}
-              >
-                Selecionar Foto
-              </button>
-
-              {/* Nome do arquivo */}
-              {nomeArquivo && (
-                <p style={{
-                  fontSize: '0.9rem',
-                  color: '#333',
-                  marginBottom: '16px',
-                  wordWrap: 'break-word',
-                  overflowWrap: 'break-word'
+              {!cameraLigada && (
+                <button type="button" onClick={abrirCamera} style={{
+                  width: '100%',
+                  padding: '10px',
+                  backgroundColor: '#10b981',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: 'pointer',
+                  fontWeight: 'bold',
+                  marginBottom: '10px'
                 }}>
-                  Arquivo selecionado: <strong>{nomeArquivo}</strong>
-                </p>
+                  Tirar Foto com a Câmera
+                </button>
               )}
 
-              {/* Botão enviar */}
-              <button type="submit" style={buttonStyle}>
+              {cameraLigada && (
+                <div>
+                  <video ref={videoRef} autoPlay style={{
+                    width: '100%',
+                    borderRadius: '6px',
+                    marginBottom: '10px'
+                  }} />
+
+                  <button type="button" onClick={capturarFoto} style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#f59e0b',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    marginBottom: '8px'
+                  }}>
+                    Capturar Foto
+                  </button>
+
+                  <button type="button" onClick={fecharCamera} style={{
+                    width: '100%',
+                    padding: '10px',
+                    backgroundColor: '#dc2626',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '6px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold'
+                  }}>
+                    Fechar Câmera
+                  </button>
+                </div>
+              )}
+
+              {fotoCapturada && (
+                <img
+                  src={URL.createObjectURL(fotoCapturada)}
+                  alt="Capturada"
+                  style={{
+                    width: '100%',
+                    marginTop: '10px',
+                    borderRadius: '6px'
+                  }}
+                />
+              )}
+
+              <button type="submit" style={{
+                width: '100%',
+                padding: '12px',
+                backgroundColor: '#4f46e5',
+                color: '#fff',
+                border: 'none',
+                borderRadius: '8px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                marginTop: '12px'
+              }}>
                 Enviar
               </button>
             </form>
@@ -210,43 +337,49 @@ export default function AbrigoPainel() {
         </div>
       )}
 
-      {/* Lista de Pessoas */}
+      {/* Grid de Pessoas */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gridTemplateColumns: 'repeat(4, 240px)',
         gap: '16px',
-        marginTop: '40px'
+        marginTop: '30px',
+        maxWidth: '1100px',
+        marginLeft: 'auto',
+        marginRight: 'auto'
       }}>
         {pessoas.map((pessoa) => (
           <div key={pessoa._id} style={{
             border: '2px solid #000',
             padding: '12px',
             borderRadius: '10px',
+            textAlign: 'center',
             display: 'flex',
             flexDirection: 'column',
-            justifyContent: 'space-between',
-            textAlign: 'center'
+            justifyContent: 'space-between'
           }}>
             <img
               src={`http://localhost:5000/uploads/${pessoa.foto}`}
               alt={pessoa.nome}
               style={{
                 width: '100%',
-                height: '180px',
+                height: '160px',
                 objectFit: 'cover',
                 borderRadius: '6px'
               }}
             />
-            <p style={{ margin: '8px 0', fontWeight: 'bold' }}>{pessoa.nome}</p>
+            <p style={{ marginTop: '8px', fontWeight: 'bold', fontSize: '0.9rem' }}>{pessoa.nome}</p>
             <button
               onClick={() => handleDeletePessoa(pessoa._id)}
               style={{
+                marginTop: '8px',
                 backgroundColor: '#dc2626',
                 color: '#fff',
                 border: 'none',
-                padding: '6px 10px',
+                padding: '8px',
                 borderRadius: '6px',
-                cursor: 'pointer'
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '0.9rem'
               }}
             >
               Excluir
