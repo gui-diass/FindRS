@@ -6,6 +6,7 @@ export default function AbrigoPainel() {
   const [nomePessoa, setNomePessoa] = useState('');
   const [foto, setFoto] = useState(null);
   const [pessoas, setPessoas] = useState([]);
+  const [nomeArquivo, setNomeArquivo] = useState("");
 
   const fetchPessoas = async () => {
     try {
@@ -65,6 +66,7 @@ export default function AbrigoPainel() {
       setShowUploadModal(false);
       setNomePessoa('');
       setFoto(null);
+      setNomeArquivo('');
       fetchPessoas();
     } catch (err) {
       console.error('Erro ao enviar:', err);
@@ -87,11 +89,24 @@ export default function AbrigoPainel() {
     } catch (err) {
       console.error('Erro ao excluir abrigo:', err);
       if (err.response && err.response.data && err.response.data.error) {
-        alert(err.response.data.error);  // Exibe o motivo (ex: "Exclua todas as pessoas antes de excluir o abrigo.")
+        alert(err.response.data.error);
       } else {
-        alert('Erro ao excluir o abrigo. Tente novamente.');
+        alert('Erro ao excluir o abrigo.');
       }
     }
+  };
+
+  const buttonStyle = {
+    width: '100%',
+    padding: '14px',
+    backgroundColor: '#4f46e5',
+    color: '#fff',
+    border: 'none',
+    borderRadius: '8px',
+    cursor: 'pointer',
+    fontWeight: 'bold',
+    fontSize: '1rem',
+    marginBottom: '12px'
   };
 
   useEffect(() => {
@@ -100,55 +115,29 @@ export default function AbrigoPainel() {
 
   return (
     <div style={{ padding: '20px', textAlign: 'center' }}>
-      <h2>Cadastro de Pessoas Abrigadas</h2>
+      <h2 style={{ marginBottom: '24px', fontSize: '1.8rem' }}>Cadastro de Pessoas Abrigadas</h2>
 
-      <div style={{ display: 'flex', justifyContent: 'center', gap: '20px', marginTop: '20px' }}>
-        <button
-          onClick={() => setShowUploadModal(true)}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#4f46e5',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
-        >
+      {/* Botões de ação */}
+      <div style={{
+        maxWidth: '400px',
+        margin: '0 auto 30px auto',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        <button onClick={() => setShowUploadModal(true)} style={{ ...buttonStyle, backgroundColor: '#4f46e5' }}>
           Enviar foto
         </button>
 
-        <button
-          onClick={handleExcluirTodasPessoas}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#dc2626',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
-        >
+        <button onClick={handleExcluirTodasPessoas} style={{ ...buttonStyle, backgroundColor: '#dc2626' }}>
           Excluir Todas as Pessoas
         </button>
 
-        <button
-          onClick={handleDeleteAbrigo}
-          style={{
-            padding: '12px 24px',
-            backgroundColor: '#000',
-            color: '#fff',
-            border: 'none',
-            borderRadius: '8px',
-            fontSize: '16px',
-            cursor: 'pointer'
-          }}
-        >
+        <button onClick={handleDeleteAbrigo} style={{ ...buttonStyle, backgroundColor: '#000' }}>
           Excluir Abrigo
         </button>
       </div>
 
+      {/* Modal Upload */}
       {showUploadModal && (
         <div style={{
           position: 'fixed', top: 0, left: 0, right: 0, bottom: 0,
@@ -163,33 +152,103 @@ export default function AbrigoPainel() {
               position: 'absolute', top: '12px', right: '16px', background: 'transparent', border: 'none', fontSize: '30px', cursor: 'pointer'
             }}>×</button>
 
-            <h3>Enviar Foto de Pessoa Abrigada</h3>
+            <h3 style={{ marginBottom: '20px' }}>Enviar Foto de Pessoa Abrigada</h3>
+
             <form onSubmit={handleSubmit}>
-              <input type="text" placeholder="Nome da pessoa" value={nomePessoa} onChange={(e) => setNomePessoa(e.target.value)} required style={{ width: '100%', margin: '12px 0', padding: '10px' }} />
-              <input type="file" accept="image/*" onChange={(e) => setFoto(e.target.files[0])} required />
-              <button type="submit" style={{ width: '100%', padding: '12px', backgroundColor: '#4f46e5', color: '#fff', borderRadius: '8px', marginTop: '10px' }}>Enviar</button>
+              <input
+                type="text"
+                placeholder="Nome da pessoa"
+                value={nomePessoa}
+                onChange={(e) => setNomePessoa(e.target.value)}
+                required
+                style={{
+                  width: '100%', padding: '10px', marginBottom: '16px',
+                  borderRadius: '8px', border: '1px solid #ccc'
+                }}
+              />
+
+              {/* Campo arquivo escondido */}
+              <input
+                type="file"
+                accept="image/*"
+                onChange={(e) => {
+                  setFoto(e.target.files[0]);
+                  if (e.target.files[0]) setNomeArquivo(e.target.files[0].name);
+                }}
+                id="uploadPessoa"
+                style={{ display: 'none' }}
+              />
+
+              {/* Botão para selecionar imagem */}
+              <button
+                type="button"
+                onClick={() => document.getElementById('uploadPessoa').click()}
+                style={buttonStyle}
+              >
+                Selecionar Foto
+              </button>
+
+              {/* Nome do arquivo */}
+              {nomeArquivo && (
+                <p style={{
+                  fontSize: '0.9rem',
+                  color: '#333',
+                  marginBottom: '16px',
+                  wordWrap: 'break-word',
+                  overflowWrap: 'break-word'
+                }}>
+                  Arquivo selecionado: <strong>{nomeArquivo}</strong>
+                </p>
+              )}
+
+              {/* Botão enviar */}
+              <button type="submit" style={buttonStyle}>
+                Enviar
+              </button>
             </form>
           </div>
         </div>
       )}
 
+      {/* Lista de Pessoas */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(6, 240px)',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
         gap: '16px',
-        marginTop: '40px',
-        justifyContent: 'start'
+        marginTop: '40px'
       }}>
         {pessoas.map((pessoa) => (
           <div key={pessoa._id} style={{
-            border: '2px solid #000', padding: '12px', borderRadius: '10px',
-            width: '220px', height: '300px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', textAlign: 'center'
+            border: '2px solid #000',
+            padding: '12px',
+            borderRadius: '10px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between',
+            textAlign: 'center'
           }}>
-            <img src={`http://localhost:5000/uploads/${pessoa.foto}`} alt={pessoa.nome} style={{ width: '100%', height: '180px', objectFit: 'cover', borderRadius: '6px' }} />
+            <img
+              src={`http://localhost:5000/uploads/${pessoa.foto}`}
+              alt={pessoa.nome}
+              style={{
+                width: '100%',
+                height: '180px',
+                objectFit: 'cover',
+                borderRadius: '6px'
+              }}
+            />
             <p style={{ margin: '8px 0', fontWeight: 'bold' }}>{pessoa.nome}</p>
-            <button onClick={() => handleDeletePessoa(pessoa._id)} style={{
-              backgroundColor: '#dc2626', color: '#fff', border: 'none', padding: '6px 10px', borderRadius: '6px', cursor: 'pointer'
-            }}>
+            <button
+              onClick={() => handleDeletePessoa(pessoa._id)}
+              style={{
+                backgroundColor: '#dc2626',
+                color: '#fff',
+                border: 'none',
+                padding: '6px 10px',
+                borderRadius: '6px',
+                cursor: 'pointer'
+              }}
+            >
               Excluir
             </button>
           </div>

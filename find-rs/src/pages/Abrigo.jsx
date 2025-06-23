@@ -15,6 +15,7 @@ export default function Abrigo() {
   const [loginData, setLoginData] = useState({ email: '', senha: '' });
   const [loginErro, setLoginErro] = useState('');
   const [mostrarSenha, setMostrarSenha] = useState(false);
+  const [mostrarSenhaCadastro, setMostrarSenhaCadastro] = useState(false);
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -122,16 +123,38 @@ export default function Abrigo() {
                   required
                 />
               ))}
-              <input
-                style={inputStyle}
-                type="password"
-                name="senha"
-                placeholder="Senha (mínimo 8 caracteres)"
-                value={form.senha}
-                onChange={handleInputChange}
-                required
-                minLength={8}
-              />
+
+              {/* Campo Senha com Olho */}
+              <div style={{ position: 'relative', width: '100%' }}>
+                <input
+                  style={inputStyle}
+                  type={mostrarSenhaCadastro ? 'text' : 'password'}
+                  name="senha"
+                  placeholder="Senha (mínimo 8 caracteres)"
+                  value={form.senha}
+                  onChange={handleInputChange}
+                  required
+                  minLength={8}
+                />
+                <button
+                  type="button"
+                  onClick={() => setMostrarSenhaCadastro((prev) => !prev)}
+                  style={{
+                    position: 'absolute',
+                    right: '12px',
+                    top: '50%',
+                    transform: 'translateY(-50%)',
+                    background: 'transparent',
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontSize: '18px',
+                    color: '#4f46e5'
+                  }}
+                >
+                  {mostrarSenhaCadastro ? <FaEyeSlash /> : <FaEye />}
+                </button>
+              </div>
+
               <button type="submit" style={submitStyle}>Criar</button>
             </form>
           </div>
@@ -154,7 +177,7 @@ export default function Abrigo() {
                 required
               />
 
-              {/* Campo senha com olho */}
+              {/* Campo Senha com Olho */}
               <div style={{ position: 'relative', width: '100%' }}>
                 <input
                   style={inputStyle}
