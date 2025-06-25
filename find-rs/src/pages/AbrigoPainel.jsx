@@ -10,6 +10,7 @@ export default function AbrigoPainel() {
   const [cameraStream, setCameraStream] = useState(null);
   const videoRef = useRef(null);
   const [pessoas, setPessoas] = useState([]);
+  const [colunas, setColunas] = useState(4);
 
   const fetchPessoas = async () => {
     try {
@@ -23,6 +24,26 @@ export default function AbrigoPainel() {
 
   useEffect(() => {
     fetchPessoas();
+  }, []);
+
+  // Responsividade do grid
+  useEffect(() => {
+    const atualizarColunas = () => {
+      const largura = window.innerWidth;
+      if (largura < 600) {
+        setColunas(1);
+      } else if (largura < 900) {
+        setColunas(2);
+      } else if (largura < 1200) {
+        setColunas(3);
+      } else {
+        setColunas(4);
+      }
+    };
+
+    atualizarColunas();
+    window.addEventListener('resize', atualizarColunas);
+    return () => window.removeEventListener('resize', atualizarColunas);
   }, []);
 
   const abrirCamera = async () => {
@@ -340,12 +361,11 @@ export default function AbrigoPainel() {
       {/* Grid de Pessoas */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(4, 240px)',
+        gridTemplateColumns: `repeat(${colunas}, 240px)`,
         gap: '16px',
         marginTop: '30px',
-        maxWidth: '1100px',
-        marginLeft: 'auto',
-        marginRight: 'auto'
+        maxWidth: '100%',
+        justifyContent: 'center'
       }}>
         {pessoas.map((pessoa) => (
           <div key={pessoa._id} style={{
