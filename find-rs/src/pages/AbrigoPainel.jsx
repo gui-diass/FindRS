@@ -361,10 +361,10 @@ export default function AbrigoPainel() {
       {/* Grid de Pessoas */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: `repeat(${colunas}, 240px)`,
-        gap: '16px',
+        gridTemplateColumns: `repeat(auto-fit, minmax(300px, 1fr))`, // torna responsivo
+        gap: '20px',
         marginTop: '30px',
-        maxWidth: '100%',
+        padding: '0 10px',
         justifyContent: 'center'
       }}>
         {pessoas.map((pessoa) => (
@@ -373,33 +373,44 @@ export default function AbrigoPainel() {
             padding: '12px',
             borderRadius: '10px',
             textAlign: 'center',
+            backgroundColor: '#fff',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'space-between'
           }}>
-            <img
-              src={`http://localhost:5000/uploads/${pessoa.foto}`}
-              alt={pessoa.nome}
-              style={{
-                width: '100%',
-                height: '160px',
-                objectFit: 'cover',
-                borderRadius: '6px'
-              }}
-            />
-            <p style={{ marginTop: '8px', fontWeight: 'bold', fontSize: '0.9rem' }}>{pessoa.nome}</p>
+            <div style={{
+              width: '100%',
+              height: '280px',
+              backgroundColor: '#f3f4f6',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              borderRadius: '8px',
+              overflow: 'hidden'
+            }}>
+              <img
+                src={`http://localhost:5000/uploads/${pessoa.foto}`}
+                alt={pessoa.nome}
+                style={{
+                  maxWidth: '100%',
+                  maxHeight: '100%',
+                  objectFit: 'contain'
+                }}
+              />
+            </div>
+            <p style={{ marginTop: '12px', fontWeight: 'bold', fontSize: '1rem' }}>{pessoa.nome}</p>
             <button
               onClick={() => handleDeletePessoa(pessoa._id)}
               style={{
-                marginTop: '8px',
+                marginTop: '10px',
                 backgroundColor: '#dc2626',
                 color: '#fff',
                 border: 'none',
-                padding: '8px',
+                padding: '10px',
                 borderRadius: '6px',
                 cursor: 'pointer',
                 fontWeight: 'bold',
-                fontSize: '0.9rem'
+                fontSize: '0.95rem'
               }}
             >
               Excluir
@@ -407,6 +418,8 @@ export default function AbrigoPainel() {
           </div>
         ))}
       </div>
+
+
     </div>
   );
 }
