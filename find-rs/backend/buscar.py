@@ -11,7 +11,7 @@ app = Flask(__name__)
 CORS(app)
 app.config['UPLOAD_FOLDER'] = UPLOADS_FOLDER
 
-# Conexão com o MongoDB
+# MongoDB
 client = MongoClient("mongodb://localhost:27017/")
 db = client["findrs"]
 pessoas_collection = db["pessoas"]
@@ -27,6 +27,7 @@ def buscar_pessoa():
         return jsonify({'error': 'Nome de arquivo inválido'}), 400
 
     caminho_temporario = os.path.join("uploads_temp", "foto_teste.jpg")
+    os.makedirs("uploads_temp", exist_ok=True)
     foto.save(caminho_temporario)
 
     try:
@@ -42,22 +43,24 @@ def buscar_pessoa():
         resultado = DeepFace.find(
             img_path=caminho_temporario,
             db_path=app.config['UPLOAD_FOLDER'],
+            model_name="Facenet512",  # Mais rápido e preciso que VGG-Face
+            detector_backend="retinaface",  # Melhor detector facial
             enforce_detection=False,
-            model_name="VGG-Face"  # ou "Facenet", "ArcFace" para melhorar
+            distance_metric="cosine",
+            silent=True  # remove logs
         )
 
         if resultado and len(resultado[0]) > 0:
             pessoa_encontrada = resultado[0].iloc[0]
             nome_arquivo = os.path.basename(pessoa_encontrada['identity'])
+            distancia = pessoa_encontrada['distance']
 
             print("Pessoa encontrada:", nome_arquivo)
-            print("Distância da correspondência:", pessoa_encontrada['distance'])
+            print("Distância da correspondência:", distancia)
 
-            if pessoa_encontrada['distance'] > 0.55:
-                print("Sem correspondência confiável.")
+            if distancia > 0.7:  # Ajuste conforme testes
                 return jsonify({"erro": "Nenhuma pessoa compatível encontrada."}), 404
 
-            # Buscar pessoa no banco de dados
             pessoa = pessoas_collection.find_one({"foto": nome_arquivo})
             if not pessoa:
                 return jsonify({'error': 'Pessoa não encontrada no banco de dados'}), 404
