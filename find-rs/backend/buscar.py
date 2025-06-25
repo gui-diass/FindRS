@@ -77,7 +77,7 @@ def buscar_pessoa():
                 correspondencias.append({
                     "nome": pessoa.get("nome", "Nome não disponível"),
                     "foto": pessoa["foto"],
-                    "distancia": round(distancia, 4),
+                    # "distancia": round(distancia, 4),
                     "abrigo": {
                         "nome": abrigo.get("nome", "Desconhecido"),
                         "cidade": abrigo.get("cidade", ""),
