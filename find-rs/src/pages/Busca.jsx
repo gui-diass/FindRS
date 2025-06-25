@@ -3,7 +3,7 @@ import axios from 'axios';
 
 export default function Busca() {
   const [fotoBusca, setFotoBusca] = useState(null);
-  const [resultado, setResultado] = useState(null);
+  const [resultado, setResultado] = useState([]);
   const [loading, setLoading] = useState(false);
   const [mensagem, setMensagem] = useState("");
   const [nomeArquivo, setNomeArquivo] = useState("");
@@ -21,21 +21,22 @@ export default function Busca() {
 
     setLoading(true);
     setMensagem("");
+    setResultado([]);
 
     try {
       const res = await axios.post("http://localhost:5001/api/buscar", formData, {
         headers: { "Content-Type": "multipart/form-data" },
       });
 
-      setResultado(res.data);
-    } catch (error) {
-      console.error("Erro ao buscar pessoa:", error);
-      if (error.response && error.response.status === 404) {
-        setResultado(null);
+      if (res.data.correspondencias.length === 0) {
         setMensagem("Nenhuma pessoa compatível foi encontrada.");
       } else {
-        setMensagem("Erro ao buscar. Tente novamente.");
+        setResultado(res.data.correspondencias);
       }
+
+    } catch (error) {
+      console.error("Erro ao buscar pessoa:", error);
+      setMensagem("Erro ao buscar. Tente novamente.");
     } finally {
       setLoading(false);
     }
@@ -74,7 +75,6 @@ export default function Busca() {
         maxWidth: '400px',
         margin: '0 auto 30px auto'
       }}>
-        {/* Input escondido */}
         <input
           type="file"
           accept="image/*"
@@ -83,7 +83,6 @@ export default function Busca() {
           id="inputArquivo"
         />
 
-        {/* Botão personalizado para escolher foto */}
         <button
           type="button"
           onClick={() => document.getElementById('inputArquivo').click()}
@@ -92,7 +91,6 @@ export default function Busca() {
           Selecionar Foto
         </button>
 
-        {/* Nome do arquivo escolhido */}
         {nomeArquivo && (
           <p style={{
             fontSize: '0.9rem',
@@ -105,7 +103,6 @@ export default function Busca() {
           </p>
         )}
 
-        {/* Botão de Procurar */}
         <button type="submit" style={buttonStyle}>
           Procurar
         </button>
@@ -119,41 +116,42 @@ export default function Busca() {
         </p>
       )}
 
-      {resultado?.foto && (
+      {resultado.length > 0 && (
         <div style={{
           display: 'flex',
+          flexWrap: 'wrap',
           justifyContent: 'center',
+          gap: '20px',
           marginTop: '30px'
         }}>
-          <div style={{
-            border: '2px solid #000',
-            padding: '16px',
-            borderRadius: '10px',
-            width: '220px',
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            textAlign: 'center'
-          }}>
-            <img
-              src={`http://localhost:5000/uploads/${resultado.foto}`}
-              alt={resultado.nome}
-              style={{
-                width: '100%',
-                height: '180px',
-                objectFit: 'cover',
-                borderRadius: '6px',
-                marginBottom: '12px'
-              }}
-            />
-            <p style={{ fontWeight: 'bold', marginBottom: '6px' }}>
-              {resultado.nome || 'Nome não disponível'}
-            </p>
-            <p style={{ fontSize: '0.9em', lineHeight: '1.4' }}>
-              Abrigo: {resultado.abrigo?.nome || 'Desconhecido'}<br />
-              Endereço: {resultado.abrigo?.rua}, {resultado.abrigo?.numero}, {resultado.abrigo?.bairro}, {resultado.abrigo?.cidade}
-            </p>
-          </div>
+          {resultado.map((pessoa, i) => (
+            <div key={i} style={{
+              border: '2px solid #000',
+              padding: '16px',
+              borderRadius: '10px',
+              width: '220px',
+              textAlign: 'center'
+            }}>
+              <img
+                src={`http://localhost:5000/uploads/${pessoa.foto}`}
+                alt={pessoa.nome}
+                style={{
+                  width: '100%',
+                  height: '180px',
+                  objectFit: 'cover',
+                  borderRadius: '6px',
+                  marginBottom: '12px'
+                }}
+              />
+              <p style={{ fontWeight: 'bold', marginBottom: '6px' }}>
+                {pessoa.nome || 'Nome não disponível'}
+              </p>
+              <p style={{ fontSize: '0.9em', lineHeight: '1.4' }}>
+                Abrigo: {pessoa.abrigo?.nome}<br />
+                Endereço: {pessoa.abrigo?.rua}, {pessoa.abrigo?.numero}, {pessoa.abrigo?.bairro}, {pessoa.abrigo?.cidade}
+              </p>
+            </div>
+          ))}
         </div>
       )}
     </div>
